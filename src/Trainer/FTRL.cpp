@@ -141,7 +141,7 @@ void FTRL::train(const std::vector<pair<std::string, double> >& fea, int label) 
         const std::string& index = fea[i].first;
         tempvec[i] = WGSZN->getOrInitDB(index);
         ModelUnit& modelUnit = *(tempvec[i]);
-        if(abs(modelUnit.z.load()) <= lambda1) {
+        if(fabs(modelUnit.z.load()) <= lambda1) {
             modelUnit.w.store(0.0);
         } else {
             modelUnit.w.store((-1) *
@@ -150,6 +150,7 @@ void FTRL::train(const std::vector<pair<std::string, double> >& fea, int label) 
         }
         p += modelUnit.w.load() * fea[i].second;
     }
+    p = utils::sigmoid(p);
     for (int i = 0; i < fea.size(); ++i) {
         ModelUnit& modelUnit = *(tempvec[i]);
         modelUnit.g.store((p-label) * (fea[i].second));
