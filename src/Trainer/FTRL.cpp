@@ -134,14 +134,15 @@ void FTRL::predictThread(){
     delete entity;
 }
 
-void FTRL::train(const std::vector<pair<std::string, double> >& fea, int label) {
+/*void FTRL::train(const std::vector<pair<std::string, double> >& fea, int label) {
     std::vector<ModelUnit*> tempvec(fea.size(),NULL);
     double p = 0.0;
     for (int i = 0; i < fea.size(); ++i) {
         const std::string& index = fea[i].first;
         tempvec[i] = WGSZN->getOrInitDB(index);
         ModelUnit& modelUnit = *(tempvec[i]);
-        if(fabs(modelUnit.z.load()) <= lambda1) {
+        modelUnit.mtx.lock();
+        if(abs(modelUnit.z.load()) <= lambda1) {
             modelUnit.w.store(0.0);
         } else {
             modelUnit.w.store((-1) *
@@ -149,14 +150,47 @@ void FTRL::train(const std::vector<pair<std::string, double> >& fea, int label) 
                               (modelUnit.z.load() - utils::sgn(modelUnit.z.load()) * lambda1));
         }
         p += modelUnit.w.load() * fea[i].second;
+        modelUnit.mtx.unlock();
     }
     p = utils::sigmoid(p);
     for (int i = 0; i < fea.size(); ++i) {
         ModelUnit& modelUnit = *(tempvec[i]);
+        modelUnit.mtx.lock();
         modelUnit.g.store((p-label) * (fea[i].second));
         modelUnit.s.store(1 / alpha * (sqrt(modelUnit.n.load() + modelUnit.g.load() * modelUnit.g.load()) - sqrt(modelUnit.n.load())));
         modelUnit.z.store(modelUnit.z.load() + modelUnit.g.load() - modelUnit.s.load() * modelUnit.w.load());
         modelUnit.n.store(modelUnit.n.load() + modelUnit.g.load() * modelUnit.g.load());
+        modelUnit.mtx.unlock();
+    }
+}*/
+
+void FTRL::train(const std::vector<pair<std::string, double> >& fea, int label) {
+    std::vector<ModelUnit*> tempvec(fea.size(),NULL);
+    double p = 0.0;
+    for (int i = 0; i < fea.size(); ++i) {
+        const std::string& index = fea[i].first;
+        tempvec[i] = WGSZN->getOrInitDB(index);
+        ModelUnit& modelUnit = *(tempvec[i]);
+        modelUnit.mtx.lock();
+        if(abs(modelUnit.z) <= lambda1) {
+            modelUnit.w = 0.0;
+        } else {
+            modelUnit.w = (-1) *
+                              (1 / (lambda2 + (beta + sqrt(modelUnit.n)) / alpha)) *
+                              (modelUnit.z - utils::sgn(modelUnit.z) * lambda1);
+        }
+        p += modelUnit.w * fea[i].second;
+        modelUnit.mtx.unlock();
+    }
+    p = utils::sigmoid(p);
+    for (int i = 0; i < fea.size(); ++i) {
+        ModelUnit& modelUnit = *(tempvec[i]);
+        modelUnit.mtx.lock();
+        modelUnit.g = (p-label) * (fea[i].second);
+        modelUnit.s = 1 / alpha * (sqrt(modelUnit.n + modelUnit.g * modelUnit.g) - sqrt(modelUnit.n));
+        modelUnit.z += modelUnit.g - modelUnit.s * modelUnit.w;
+        modelUnit.n += modelUnit.g * modelUnit.g;
+        modelUnit.mtx.unlock();
     }
 }
 
