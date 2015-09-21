@@ -26,6 +26,7 @@ struct ModelUnit{
     double n;
     std::mutex mtx;
     ModelUnit(double w_i,double g_i,double s_i,double z_i,double n_i){w=w_i;g=g_i;s=s_i;z=z_i;n=n_i;};
-    ModelUnit(){ModelUnit(0.0,0.0,0.0,0.0,0.0);}
+    ModelUnit(){w=0.0;g=0.0;s=0.0;z=0.0;n=0.0;}
+    //ModelUnit(){ModelUnit(0.0,0.0,0.0,0.0,0.0);}
 };
 #endif //FTRL_MODELUNIT_H

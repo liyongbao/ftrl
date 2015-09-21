@@ -25,8 +25,8 @@
 class FTRL{
 public:
     //  用作train时的初始化函数
-    FTRL(double a, double b, double c, double d, int t_num, int model_size)
-            :alpha(a),beta(b),lambda1(c),lambda2(d), threadNum(t_num){
+    FTRL(double a, double b, double c, double d, int t_num, int model_size, bool b_addBias)
+            :alpha(a),beta(b),lambda1(c),lambda2(d), threadNum(t_num), addBias(b_addBias){
         //WGSZN = new VectorDB(model_size);
         WGSZN = new MapDB();
     };
@@ -48,6 +48,7 @@ private:
     double lambda1;
     double lambda2;
     int threadNum;
+    bool addBias;
     int type;
     std::ofstream fPredict;
     std::mutex queueMtx, outMtx;

@@ -6,7 +6,7 @@
 #include <cmath>
 
 const double kPrecision = 0.0000000001;
-void utils::splitString(std::string& line,char delimiter, std::vector<std::string>* r){
+void utils::splitString(std::string& line, char delimiter, std::vector<std::string>* r){
     int begin=0;
     for(int i=0;i<line.size();i++){
         if(line[i] == delimiter){

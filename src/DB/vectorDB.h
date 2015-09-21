@@ -85,7 +85,7 @@ public:
             while(vWeight.size() <= ikey){
                 vWeight.push_back(0);
             }
-            if(fabs(std::stod(r[1])) > smallDouble)
+            if(fabs(std::stod(r[1])) > smallDouble || getBiasKey() == r[0])
                 vWeight[ikey] = std::stod(r[1]);
             else
                 vWeight[ikey] = 0;
@@ -93,13 +93,30 @@ public:
         return true;
     }
 
+
     VectorDB(int model_size){
         vMap.assign(model_size, NULL);
     }
     VectorDB(){}
+    
+    std::string& getBiasKey(){
+        return bias;
+    }
+    
+    bool isBiasInModel(){
+        int ikey = std::stoi(getBiasKey());
+        if (ikey < vMap.size() && NULL != vMap[ikey]) {
+            return true;
+        }
+        if (ikey < vWeight.size() && 0 != vWeight[ikey]) {
+            return true;
+        }
+        return false;
+    }    
 private:
     std::vector<ModelUnit*> vMap;
     std::vector<double> vWeight;
     std::mutex mtx;
+    std::string bias="0";
 };
 #endif //FTRL_VECTORDB_H

@@ -142,7 +142,7 @@ void FTRL::predictThread(){
         tempvec[i] = WGSZN->getOrInitDB(index);
         ModelUnit& modelUnit = *(tempvec[i]);
         modelUnit.mtx.lock();
-        if(abs(modelUnit.z.load()) <= lambda1) {
+        if(fabs(modelUnit.z.load()) <= lambda1) {
             modelUnit.w.store(0.0);
         } else {
             modelUnit.w.store((-1) *
@@ -172,7 +172,7 @@ void FTRL::train(const std::vector<pair<std::string, double> >& fea, int label) 
         tempvec[i] = WGSZN->getOrInitDB(index);
         ModelUnit& modelUnit = *(tempvec[i]);
         modelUnit.mtx.lock();
-        if(abs(modelUnit.z) <= lambda1) {
+        if(fabs(modelUnit.z) <= lambda1) {
             modelUnit.w = 0.0;
         } else {
             modelUnit.w = (-1) *
@@ -217,9 +217,15 @@ void FTRL::parseLineToEntity(const std::string& line, EntityUnit *entity) {
         if(posb==std::string::npos)
             break;
         pose=line.find_first_of(innerSpliter,posb);
-        if(pose==std::string::npos)
-            throw 404;
+        if(pose==std::string::npos){
+            std::cout << "wrong line input\n" << line << std::endl;
+            throw "wrong line input";
+        }
         key=line.substr(posb,pose-posb);
+        if(WGSZN->getBiasKey() == key){
+            std::cout << "input should not contains bias key: " << key << "\n" << line << std::endl;
+            throw "wrong line input";
+        }
         posb=pose+1;
         if(posb >= line.size())
             throw 404;
@@ -228,6 +234,11 @@ void FTRL::parseLineToEntity(const std::string& line, EntityUnit *entity) {
         if(value!=0)
             entity->feature.push_back(std::make_pair(key,value));
     }
+    if(addBias){
+        key = WGSZN->getBiasKey();
+        value = 1.0;
+        entity->feature.push_back(std::make_pair(key,value));
+    }
 }
 
 void FTRL::printW(std::ofstream& out) {
@@ -235,8 +246,15 @@ void FTRL::printW(std::ofstream& out) {
 }
 
 bool FTRL::loadModel(std::ifstream& fModel){
-    return WGSZN->loadModel(fModel);
+    if(!WGSZN->loadModel(fModel)){
+        return false;
+    }
+    return (WGSZN->isBiasInModel() == addBias);
 }
 bool FTRL::loadNonZeroWeight(std::ifstream& fModel){
-    return WGSZN->loadNonZeroWeight(fModel);
+    if(!WGSZN->loadNonZeroWeight(fModel)){
+        return false;
+    }
+    addBias = WGSZN->isBiasInModel();
+    return true;
 }

@@ -6,11 +6,12 @@
 
 struct Option {
     Option() : alpha(0.05f), beta(1.0f), lambda1(0.1f), lambda2(5.0f),
-               nr_threads(1), b_init(false), model_size(100000) {}
+               nr_threads(1), b_init(false), model_size(100000), b_addBias(false) {}
     std::string model_path, init_m_path;
     double alpha, beta, lambda1, lambda2;
     int nr_threads, model_size;
     bool b_init;
+    bool b_addBias;
 };
 
 std::string train_help() {
@@ -27,6 +28,7 @@ std::string train_help() {
                     "-core <nr_threads>: set the number of threads\tdefault:1\n"
                     "-im <initial_m>: set the initial value of model\n"
                     "-size <model_size>: set the largest size of model\n"
+                    "-bias <1/0>: set the bias, the value can only be 1 or 0\tdefault:0\n"
     );
 }
 
@@ -87,6 +89,20 @@ Option parse_option(std::vector<std::string> const &args) {
             opt.init_m_path = args[++i];
             opt.b_init=true; //if im field exits , that means b_init = true !
         }
+        else if(args[i].compare("-bias") == 0) {
+            if(i == argc-1)
+                throw std::invalid_argument("invalid command\n");
+            std::string value = args[++i];
+            if(value.compare("1") == 0) {
+                opt.b_addBias = true;
+            }
+            else if(value.compare("0") == 0) {
+                opt.b_addBias = false;
+            }
+            else {
+                throw std::invalid_argument("invalid command\n");
+            }
+        }
         else {
             break;
         }
@@ -106,7 +122,7 @@ int main(int argc,char* argv[]) {
         std::cout << e.what();
         return EXIT_FAILURE;
     }
-    FTRL modelObj(opt.alpha, opt.beta, opt.lambda1, opt.lambda2, opt.nr_threads, opt.model_size);
+    FTRL modelObj(opt.alpha, opt.beta, opt.lambda1, opt.lambda2, opt.nr_threads, opt.model_size, opt.b_addBias);
 
     if(opt.b_init) {
         std::ifstream f_temp(opt.init_m_path.c_str());

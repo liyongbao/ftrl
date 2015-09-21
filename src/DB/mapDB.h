@@ -75,16 +75,33 @@ public:
                 std::cout<<line<<std::endl;
                 return false;
             }
-            if(fabs(std::stod(r[1])) > smallDouble)
+            if(fabs(std::stod(r[1])) > smallDouble || getBiasKey() == r[0])
                 vWeight.insert(std::make_pair(r[0], std::stod(r[1])));
         }
         return true;
     }
 
     MapDB(){}
+    
+    std::string& getBiasKey(){
+        return bias;
+    }
+    
+    bool isBiasInModel(){
+        auto iter1 = vMap.find(getBiasKey());
+        if (iter1 != vMap.end()) {
+            return true;
+        }
+        auto iter2 = vWeight.find(getBiasKey());
+        if (iter2 != vWeight.end()) {
+            return true;
+        }
+        return false;
+    }
 private:
     std::unordered_map<std::string, ModelUnit*> vMap;
     std::unordered_map<std::string, double> vWeight;
     std::mutex mtx;
+    std::string bias = "bias";
 };
 #endif //FTRL_MAPDB_H
